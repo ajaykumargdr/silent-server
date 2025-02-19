@@ -1,0 +1,13 @@
+syntax="proto3";
+import "google/protobuf/empty.proto";
+
+package server;
+
+service Service{
+   rpc StartServer(google.protobuf.Empty) returns (google.protobuf.Empty);
+   rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+// message Path{
+//    string name =1;
+// }
