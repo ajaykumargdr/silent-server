@@ -40,10 +40,15 @@ impl Service for RpcService {
             let child = start().unwrap();
 
             loop {
-                if matches!(rx.recv_timeout(Duration::from_millis(500)), Err(_)) {
+
+                let instance = std::time::Instant::now();
+                if matches!(rx.recv_timeout(Duration::from_secs(10)), Err(_)) {
+                    println!("timeout {:?}!", instance.elapsed());
                     stop(child).unwrap();
                     break;
                 };
+
+                println!("ping received in {:?}!", instance.elapsed());
             }
         });
 
