@@ -16,8 +16,9 @@ mod silent_server {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse()?;
-
     let app = RpcService::default();
+
+    println!("Started RPC Server At {}...🚀", addr);
 
     tonic::transport::Server::builder()
         .add_service(ServiceServer::new(app))
@@ -33,6 +34,9 @@ pub struct RpcService;
 #[tonic::async_trait]
 impl Service for RpcService {
     async fn start_server(&self, _request: Request<()>) -> Result<Response<()>, tonic::Status> {
+
+        println!("📥 RPC startServer request received!");
+
         let (tx, rx) = std::sync::mpsc::channel::<()>();
         *AWAKE_CHANNEL.lock().unwrap() = Some(tx);
 
@@ -40,15 +44,14 @@ impl Service for RpcService {
             let child = start().unwrap();
 
             loop {
-
                 let instance = std::time::Instant::now();
                 if matches!(rx.recv_timeout(Duration::from_secs(10)), Err(_)) {
-                    println!("timeout {:?}!", instance.elapsed());
                     stop(child).unwrap();
+                    println!("⏱️  Timeout {:?}, Terminated the Process ☠️!", instance.elapsed());
                     break;
                 };
 
-                println!("ping received in {:?}!", instance.elapsed());
+                println!("\nPing received in 🏓 {:?}, Resetting Timer!", instance.elapsed());
             }
         });
 
@@ -56,6 +59,7 @@ impl Service for RpcService {
     }
 
     async fn ping(&self, _request: Request<()>) -> Result<Response<()>, tonic::Status> {
+        println!("📥 RPC ping request received!");
         let tx = AWAKE_CHANNEL.lock().unwrap().as_ref().unwrap().clone();
         tx.send(()).unwrap();
 
@@ -64,7 +68,12 @@ impl Service for RpcService {
 }
 
 pub fn start() -> Result<Child, std::io::Error> {
-    Command::new("./program").stdin(Stdio::piped()).spawn()
+    Command::new("cargo")
+        .arg("run")
+        .arg("-r")
+        .args(["--example", "program"])
+        .stdin(Stdio::piped())
+        .spawn()
 }
 
 pub fn stop(mut child_process: Child) -> Result<Output, std::io::Error> {
